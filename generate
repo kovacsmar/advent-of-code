@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+generate() {
+  for i in {1..12}; do
+    echo "$i"
+    mkdir "Day-$i"
+    pushd "Day-$i"
+
+    mkdir input
+    touch input/test.txt
+    touch input/puzzle.txt
+
+    go mod init "day-$i"
+
+    cat <<EOF >"main.go"
+package main
+
+import (
+	"fmt"
+	"iter"
+	"os"
+	"strings"
+)
+
+func ReadInput(path string) iter.Seq[string] {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+
+	return strings.SplitSeq(strings.TrimSuffix(string(data), "\n"), "\n")
+}
+
+func usage() {
+	msg := \`Usage:
+	
+	\<basecommand\> \<part1 | part2 | hello | help\>
+
+basecommand could be the compiled binary or 'go run main.go'
+
+Please always add a valid a argument to the basecommand
+
+Errors:
+	exit code 2 means input error, exit code 1 means code error.
+	\`
+
+	fmt.Println(msg)
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		usage()
+		os.Exit(2)
+	}
+	switch os.Args[1] {
+	case "part1":
+	case "part2":
+	case "hello":
+		fmt.Println("Advent of Code 2026!")
+	case "help":
+		usage()
+	default:
+		usage()
+		os.Exit(2)
+	}
+}
+EOF
+
+    for j in {1..2}; do
+      mkdir "part-$j"
+      touch "part-${j}_test.go"
+      echo "package main_test" >"part-${j}_test.go"
+    done
+    popd
+  done
+}
+
+main() {
+  if [[ "$1" == "" ]]; then
+    echo "Please provide a year between 2000 and 2099 as the first argument"
+    exit 2
+  fi
+  local year="$1"
+  if [[ -d "$year" ]]; then
+    echo "Folder already exists"
+    exit 2
+  fi
+  if ! [[ "$year" =~ ^20[0-9]{2}$ ]]; then
+    echo "The generator script only work for years 2000-2099 as of now"
+    exit 2
+  fi
+
+  mkdir "$year"
+  pushd "$year"
+  generate
+  popd
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
