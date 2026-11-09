@@ -3,41 +3,38 @@
 set -euo pipefail
 
 generate() {
+  # 12 days of advent of code
   for i in {1..12}; do
     echo "$i"
     mkdir "Day-$i"
     pushd "Day-$i"
 
+    # Generate input holding files
     mkdir input
     touch input/test.txt
     touch input/puzzle.txt
 
+    # Initailize go module
     go mod init "day-$i"
 
+    # Generate main
     cat <<EOF >"main.go"
 package main
 
 import (
 	"fmt"
-	"iter"
 	"os"
-	"strings"
+
+	"day-$i/reader"
+
+	part1 "day-$i/part-1"
+	part2 "day-$i/part-2"
 )
-
-func ReadInput(path string) iter.Seq[string] {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-
-	return strings.SplitSeq(strings.TrimSuffix(string(data), "\n"), "\n")
-}
 
 func usage() {
 	msg := \`Usage:
 	
-	\<basecommand\> \<part1 | part2 | hello | help\>
+	<basecommand> <part1 | part2 | hello | help>
 
 basecommand could be the compiled binary or 'go run main.go'
 
@@ -57,7 +54,11 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "part1":
+		part1Solution := part1.Solve(reader.ReadInput("input/puzzle.txt"))
+		fmt.Printf("Part 1 solution: %v\n", part1Solution)
 	case "part2":
+		part2Solution := part2.Solve(reader.ReadInput("input/puzzle.txt"))
+		fmt.Printf("Part 2 solution: %v\n", part2Solution)
 	case "hello":
 		fmt.Println("Advent of Code 2026!")
 	case "help":
@@ -68,11 +69,65 @@ func main() {
 	}
 }
 EOF
+    # Reader package
+    mkdir reader
+    cat <<EOF >"reader/reader.go"
+// Package reader provides ReadInput utility
+package reader
+
+import (
+	"fmt"
+	"iter"
+	"os"
+	"strings"
+)
+
+func ReadInput(path string) iter.Seq[string] {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+
+	return strings.SplitSeq(strings.TrimSuffix(string(data), "\n"), "\n")
+}
+EOF
 
     for j in {1..2}; do
+      # solution packages
       mkdir "part-$j"
-      touch "part-${j}_test.go"
-      echo "package main_test" >"part-${j}_test.go"
+      cat <<EOF >"part-$j/solution.go"
+// Package part$j contains part$j solution
+package part$j
+
+import (
+	"iter"
+)
+
+func Solve(lines iter.Seq[string]) int {
+	return 0
+}
+EOF
+      # tests
+      cat <<EOF >"part-${j}/solution_test.go"
+package part${j}_test
+
+import (
+	"testing"
+
+	"day-$i/reader"
+
+	part$j "day-$i/part-$j"
+)
+
+func TestPart$j(t *testing.T) {
+	expected := 0
+	got := part${j}.Solve(reader.ReadInput("../input/test.txt"))
+	if got != expected {
+		t.Errorf("Test failed with expected value: %v, test output: %v", expected, got)
+	}
+}
+EOF
     done
     popd
   done

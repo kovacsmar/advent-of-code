@@ -2,25 +2,18 @@ package main
 
 import (
 	"fmt"
-	"iter"
 	"os"
-	"strings"
+
+	"day-12/reader"
+
+	part1 "day-12/part-1"
+	part2 "day-12/part-2"
 )
-
-func ReadInput(path string) iter.Seq[string] {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-
-	return strings.SplitSeq(strings.TrimSuffix(string(data), "\n"), "\n")
-}
 
 func usage() {
 	msg := `Usage:
 	
-	\<basecommand\> \<part1 | part2 | hello | help\>
+	<basecommand> <part1 | part2 | hello | help>
 
 basecommand could be the compiled binary or 'go run main.go'
 
@@ -40,7 +33,11 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "part1":
+		part1Solution := part1.Solve(reader.ReadInput("input/puzzle.txt"))
+		fmt.Printf("Part 1 solution: %v\n", part1Solution)
 	case "part2":
+		part2Solution := part2.Solve(reader.ReadInput("input/puzzle.txt"))
+		fmt.Printf("Part 2 solution: %v\n", part2Solution)
 	case "hello":
 		fmt.Println("Advent of Code 2026!")
 	case "help":
